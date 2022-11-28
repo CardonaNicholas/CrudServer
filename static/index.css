@@ -76,4 +76,16 @@
 	#divHair {
 		text-align:left !important;
 	}
+
+    #mainTable td {
+        font-size: 9pt;
+        padding: 4px;
+    }
+    #mainTable td:first-of-type {
+        font-size: 8pt;
+        padding-right: 12px;
+    }
+    #divDettagli {
+        margin-left: 15px;
+    }
 }

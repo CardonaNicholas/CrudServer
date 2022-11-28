@@ -7,7 +7,7 @@ import express from "express";
 
 
 // config
-const PORT = 1337;
+const PORT = process.env.PORT || 1337;
 dotenv.config({ path: ".env" });
 const app = express();
 const connectionString: any = process.env.connectionString;
@@ -70,14 +70,14 @@ app.use("/api/", (req: any, res: any, next: any) => {
       res.send("Errore di connessione al DB");
     })
     .then((client: any) => {
-      req["client"] = client;
+      req["connessione"] = client;
       next();
     });
 });
 
 /***********USER LISTENER****************/
 app.get("/api/getCollections", (req: any, res: any, next: any) => {
-  let db = req.client.db(DBNAME);
+  let db = req["connessione"].db(DBNAME);
   // Leggo tutte le collezioni del DB
   db.listCollections().toArray((err: any, data: any) => {
     if (err) {
@@ -86,7 +86,7 @@ app.get("/api/getCollections", (req: any, res: any, next: any) => {
     } else {
       res.send(data);
     }
-    req.client.close();
+    req.connessione.close();
   });
 });
 
@@ -96,7 +96,7 @@ app.get(
     let gender = req.params.gender;
     let hair = req.params.hair;
 
-    let collection = req.client.db(DBNAME).collection("unicorns");
+    let collection = req["connessione"].db(DBNAME).collection("unicorns");
     collection.find({ gender, hair }).toArray((err: any, data: any) => {
       if (err) {
         res.status(500);
@@ -104,7 +104,7 @@ app.get(
       } else {
         res.send(data);
       }
-      req.client.close();
+      req.connessione.close();
     });
   }
 );
@@ -113,7 +113,7 @@ app.get("/api/:collection", (req: any, res: any, next: any) => {
   let collectionSelected = req.params.collection;
   let param = req.query;
 
-  let collection = req.client.db(DBNAME).collection(collectionSelected);
+  let collection = req["connessione"].db(DBNAME).collection(collectionSelected);
   collection.find(param).toArray((err: any, data: any) => {
     if (err) {
       res.status(500);
@@ -126,7 +126,7 @@ app.get("/api/:collection", (req: any, res: any, next: any) => {
       }
       res.send(response);
     }
-    req.client.close();
+    req.connessione.close();
   });
 });
 
@@ -134,7 +134,7 @@ app.get("/api/:collection/:id", (req: any, res: any, next: any) => {
   let collectionSelected = req.params.collection;
   let id = new ObjectId(req.params.id);
 
-  let collection = req.client.db(DBNAME).collection(collectionSelected);
+  let collection = req["connessione"].db(DBNAME).collection(collectionSelected);
   collection.findOne({ _id: id }, (err: any, data: any) => {
     if (err) {
       res.status(500);
@@ -142,7 +142,7 @@ app.get("/api/:collection/:id", (req: any, res: any, next: any) => {
     } else {
       res.send(data);
     }
-    req.client.close();
+    req.connessione.close();
   });
 });
 
@@ -150,7 +150,7 @@ app.delete("/api/:collection/:id", (req: any, res: any, next: any) => {
   let collectionSelected = req.params.collection;
   let id = new ObjectId(req.params.id);
 
-  let collection = req.client.db(DBNAME).collection(collectionSelected);
+  let collection = req["connessione"].db(DBNAME).collection(collectionSelected);
   collection.deleteOne({ _id: id }, (err: any, data: any) => {
     if (err) {
       res.status(500);
@@ -158,7 +158,7 @@ app.delete("/api/:collection/:id", (req: any, res: any, next: any) => {
     } else {
       res.send(data);
     }
-    req.client.close();
+    req.connessione.close();
   });
 });
 
@@ -166,7 +166,7 @@ app.patch("/api/:collection/:id", (req: any, res: any, next: any) => {
   let collectionSelected = req.params.collection;
   let id = new ObjectId(req.params.id);
 
-  let collection = req.client.db(DBNAME).collection(collectionSelected);
+  let collection = req["connessione"].db(DBNAME).collection(collectionSelected);
   collection.updateOne(
     { _id: id },
     { $set: req.body.stream },
@@ -177,7 +177,7 @@ app.patch("/api/:collection/:id", (req: any, res: any, next: any) => {
       } else {
         res.send(data);
       }
-      req.client.close();
+      req.connessione.close();
     }
   );
 });
@@ -186,7 +186,7 @@ app.put("/api/:collection/:id", (req: any, res: any, next: any) => {
   let collectionSelected = req.params.collection;
   let id = new ObjectId(req.params.id);
 
-  let collection = req.client.db(DBNAME).collection(collectionSelected);
+  let collection = req["connessione"].db(DBNAME).collection(collectionSelected);
   collection.replaceOne({ _id: id }, req.body.stream, (err: any, data: any) => {
     if (err) {
       res.status(500);
@@ -194,7 +194,7 @@ app.put("/api/:collection/:id", (req: any, res: any, next: any) => {
     } else {
       res.send(data);
     }
-    req.client.close();
+    req.connessione.close();
   });
 });
 
@@ -202,7 +202,7 @@ app.post("/api/:collection", (req: any, res: any, next: any) => {
   let collectionSelected = req.params.collection;
   let params = req.body.stream;
 
-  let collection = req.client.db(DBNAME).collection(collectionSelected);
+  let collection = req["connessione"].db(DBNAME).collection(collectionSelected);
   collection.insertOne(params, (err: any, data: any) => {
     if (err) {
       res.status(500);
@@ -210,7 +210,7 @@ app.post("/api/:collection", (req: any, res: any, next: any) => {
     } else {
       res.send(data);
     }
-    req.client.close();
+    req.connessione.close();
   });
 });
 
@@ -220,15 +220,15 @@ app.use("/", (req: any, res: any, next: any) => {
   res.status(404);
   if (req.originalUrl.startsWith("/api/")) {
     res.send("API non disponibile");
-    req.client.close();
+    req.connessione.close();
   } else {
     res.send(paginaErrore);
   }
 });
 
 app.use("/", (err: any, req: any, res: any, next: any) => {
-  if (req.client) {
-    req.client.close();
+  if (req["connessione"]) {
+    req.connessione.close();
   }
   console.log("SERVER ERROR " + err.stack);
   res.status(500);
